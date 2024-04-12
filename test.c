@@ -2,12 +2,17 @@
 //#include <linux/i2c-dev.h>
 //#include <i2c/smbus.h>
 //}
+//#include <linux/i2c-dev.h>
+
 #include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
+#include <i2c/smbus.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>    /* For O_RDWR */
 #include <unistd.h> 
-#include <iostream>
-using namespace std;
+//#include <iostream>
+//using namespace std;
 
 int file;
 int adapter_nr = 1;
@@ -65,8 +70,8 @@ int main()
 		accel_x = read_raw_data(file, accel_x_register_high) / 133.0;
 		accel_y = read_raw_data(file, accel_y_register_high) / 133.0;
 		accel_z = read_raw_data(file, accel_z_register_high) / 133.0;
-
-		cout << accel_x <<" " << accel_y << " " << accel_z << " " << endl;
+		printf("[x y z]: %d %d %d\n", accel_x, accel_y, accel_z);
+		//cout << accel_x <<" " << accel_y << " " << accel_z << " " << endl;
 
 		usleep(150000);
 	}
