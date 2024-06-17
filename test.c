@@ -30,11 +30,13 @@ int main()
 {
 	file = open(filename, O_RDWR);
 	if (file < 0) {
+		printf("%s %d\n", __func__, __LINE__);
 		exit(1);
 	}
 	int addr = 0x18;
 
 	if (ioctl(file, I2C_SLAVE, addr) < 0) {
+		printf("%s %d\n", __func__, __LINE__);
 		exit(1);
 	}
 
