@@ -127,10 +127,11 @@ void i2c_read_bytes(int file, uint8_t reg, uint8_t *data, size_t length) {
     }
 }
 
+static float globalMeanChangeRate;
 // return
 // 0-stop, 1-run
-int get_device_status(float *meanChangeRate) {
-    if (*meanChangeRate > THRESHOLD)
+int get_device_status() {
+    if (globalMeanChangeRate > THRESHOLD)
         return RUN;
     return STOP;
 }
@@ -177,7 +178,7 @@ int main(int argc, char *argv[]) {
     initQueue(&absQueue);
     initQueue(&changeRateQueue);
 
-    float dt = 0.1; // 10ms
+    float dt = 0.1; // 100ms
     struct timespec sleep_time = {0, dt * 1000000000L}; // 
 
     while (1) {
@@ -199,6 +200,7 @@ int main(int argc, char *argv[]) {
         float absValue = computeAbsoluteValue(accel_x_g, accel_y_g, accel_z_g);
 
         updateChangeRateAndMean(&absQueue, &changeRateQueue, absValue, &meanChangeRate);
+        globalMeanChangeRate = meanChangeRate;
 
         FILE *file = fopen(output_file, "a");
         if (file == NULL) {
@@ -206,7 +208,7 @@ int main(int argc, char *argv[]) {
             close(i2c_file);
             exit(1);
         }
-
+        
         fprintf(file, "%.4f,%.4f,%.4f\n", accel_x_g, accel_y_g, accel_z_g);
 
         fflush(file);
