@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <math.h>
+#include <pthread.h>
 
 #define I2C_DEVICE "/dev/i2c-3" // I2C 
 #define LIS3DHTR_ADDR 0x19      // LIS3DHTR I2C 
@@ -24,6 +25,7 @@
 #define THRESHOLD 0.07
 #define RUN 1
 #define STOP 0
+
 
 typedef struct {
     float data[QUEUE_SIZE];
@@ -126,25 +128,17 @@ void i2c_read_bytes(int file, uint8_t reg, uint8_t *data, size_t length) {
         perror("Failed to read from the i2c bus");
     }
 }
-
-static float globalMeanChangeRate;
+static float g_meanChangeRate;
 // return
 // 0-stop, 1-run
 int get_device_status() {
-    if (globalMeanChangeRate > THRESHOLD)
+    if (g_meanChangeRate > THRESHOLD)
         return RUN;
     return STOP;
 }
 
-
-int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <output_file>\n", argv[0]);
-        exit(1);
-    }
-
-    const char *output_file = argv[1];
-
+void * lis3hd_main(void * arg)
+{
     int i2c_file = open(I2C_DEVICE, O_RDWR);
     if (i2c_file < 0) {
         perror("Failed to open the i2c bus");
@@ -178,7 +172,7 @@ int main(int argc, char *argv[]) {
     initQueue(&absQueue);
     initQueue(&changeRateQueue);
 
-    float dt = 0.1; // 100ms
+    float dt = 0.1; // 10ms
     struct timespec sleep_time = {0, dt * 1000000000L}; // 
 
     while (1) {
@@ -200,21 +194,7 @@ int main(int argc, char *argv[]) {
         float absValue = computeAbsoluteValue(accel_x_g, accel_y_g, accel_z_g);
 
         updateChangeRateAndMean(&absQueue, &changeRateQueue, absValue, &meanChangeRate);
-        globalMeanChangeRate = meanChangeRate;
-
-        FILE *file = fopen(output_file, "a");
-        if (file == NULL) {
-            perror("Failed to open file");
-            close(i2c_file);
-            exit(1);
-        }
-        
-        fprintf(file, "%.4f,%.4f,%.4f\n", accel_x_g, accel_y_g, accel_z_g);
-
-        fflush(file);
-
-        fclose(file);
-
+	g_meanChangeRate = meanChangeRate;
         printf("Acceleration: X=%.4f g, Y=%.4f g, Z=%.4f g, Mean Change Rate: %.4f\n", accel_x_g, accel_y_g, accel_z_g, meanChangeRate);
 
         nanosleep(&sleep_time, NULL);
@@ -222,4 +202,11 @@ int main(int argc, char *argv[]) {
 
     close(i2c_file);
     return 0;
+}
+
+int is_device_run()
+{
+	pthread_t run_task;
+	int retval = pthread_create(&run_task, NULL, lis3hd_main, NULL);
+	return 0;
 }
