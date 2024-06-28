@@ -21,8 +21,8 @@
 #define OUT_Z_L      0x2C       // Z 
 #define OUT_Z_H      0x2D       // Z 
 
-#define QUEUE_SIZE 100
-#define THRESHOLD 0.07
+#define QUEUE_SIZE 50
+#define THRESHOLD 0.045
 #define RUN 1
 #define STOP 0
 
@@ -132,8 +132,11 @@ static float g_meanChangeRate;
 // return
 // 0-stop, 1-run
 int get_device_status() {
-    if (g_meanChangeRate > THRESHOLD)
+    if (g_meanChangeRate > THRESHOLD) {
+        printf("send RUN to upstream task!\n");
         return RUN;
+    } 
+    printf("send STOP to upstream task!\n");
     return STOP;
 }
 
