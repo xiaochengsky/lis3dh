@@ -11,9 +11,9 @@
 
 #define I2C_DEVICE "/dev/i2c-3" // I2C 
 #define LIS3DHTR_ADDR 0x19      // LIS3DHTR I2C 
-#define WHO_AM_I     0x0F       //  ID 
-#define CTRL_REG1    0x20       //  1
-#define CTRL_REG4    0x23       //  4
+#define WHO_AM_I     0x0F       // ID 
+#define CTRL_REG1    0x20       // 1
+#define CTRL_REG4    0x23       // 4
 #define OUT_X_L      0x28       // X 
 #define OUT_X_H      0x29       // X 
 #define OUT_Y_L      0x2A       // Y 
@@ -174,6 +174,7 @@ void * lis3hd_main(void * arg)
 
     float dt = 0.1; // 10ms
     struct timespec sleep_time = {0, dt * 1000000000L}; // 
+    int cnt = 0;
 
     while (1) {
         uint8_t accel_data[6];
@@ -194,7 +195,14 @@ void * lis3hd_main(void * arg)
         float absValue = computeAbsoluteValue(accel_x_g, accel_y_g, accel_z_g);
 
         updateChangeRateAndMean(&absQueue, &changeRateQueue, absValue, &meanChangeRate);
-	g_meanChangeRate = meanChangeRate;
+	    g_meanChangeRate = meanChangeRate;
+
+        // send STOP to upstream task before first 10s(100ms * 100)
+        if (cnt < 100) {
+            cnt++;
+            g_meanChangeRate = 0;       
+        }
+
         printf("Acceleration: X=%.4f g, Y=%.4f g, Z=%.4f g, Mean Change Rate: %.4f\n", accel_x_g, accel_y_g, accel_z_g, meanChangeRate);
 
         nanosleep(&sleep_time, NULL);
