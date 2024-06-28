@@ -21,7 +21,7 @@
 #define OUT_Z_L      0x2C       // Z 
 #define OUT_Z_H      0x2D       // Z 
 
-#define QUEUE_SIZE 50
+#define QUEUE_SIZE 500
 #define THRESHOLD 0.045
 #define RUN 1
 #define STOP 0
